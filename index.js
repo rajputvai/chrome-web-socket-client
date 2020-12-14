@@ -12,10 +12,10 @@ $(document).ready(function() {
   };
 
   var LogMessageSender = {
-    SYSTEM: 'system',
-    LOCAL: 'local',
-    REMOTE: 'remote',
-    CONSOLE: 'console'
+    SYSTEM: 'SYSTEM',
+    LOCAL: 'LOCAL',
+    REMOTE: 'REMOTE',
+    CONSOLE: 'CONSOLE'
   };
 
   var MAX_LOG_SIZE = 500;
@@ -148,21 +148,20 @@ $(document).ready(function() {
   };
 
   var addLogEntry = function(sender, type, data) {
-    pruneLog();
+    // pruneLog();
 
     if (type == LogMessageType.BINARY) {
       data = '(BINARY MESSAGE: ' + data.size + ' bytes)\n' + blobToHex(data);
     } else {
       data = data || '(empty message)';
     }
-
+    var date = new Date();
     var entry = $("<div>").addClass('entry');
-    var publisher = $("<div>").addClass('publisher').addClass(sender);
-    var content = $("<div>").addClass('content').addClass(type).text(data);
-    var timestamp = $("<div>").addClass('timestamp').text('just now');
-    entry.attr('timestamp', '' + Date.now());
-    publisher.append(timestamp);
-    entry.append(publisher);
+    var timestamp = $("<span>").addClass('timestamp').text(`${date.toISOString()} `);
+    var publisher = $("<span>").addClass('publisher').addClass(sender.toLowerCase()).text(`${sender}`);
+    var content = $("<div>").addClass('content').addClass(type).text(` - ${data}`);
+    content.prepend(publisher)
+    content.prepend(timestamp)
     entry.append(content);
     var scroll = logIsScrolledToBottom();
     $(".log .entries").append(entry);
@@ -313,43 +312,4 @@ $(document).ready(function() {
   addLogEntry(LogMessageSender.CONSOLE,
               LogMessageType.TEXT, 
               'Welcome! You may initiate and manage a web socket connection using the controls above. Messages sent and received will appear in this log.');
-
-  var SECOND = 1000;
-  var MINUTE = SECOND * 60;
-  var HOUR = MINUTE * 60;
-  var DAY = HOUR * 24;
-  var MONTH = DAY * 30;
-  var YEAR = MONTH * 12;
-
-  var formatTimeDifference = function(now, then) {
-    var difference = Math.abs(now - then); // in ms
-
-    if (difference < 30 * SECOND) {
-      return 'just now';  
-    }
-    if (difference < MINUTE) {
-      return '< 1 min ago';
-    }
-    if (difference < HOUR) {
-      return Math.round(difference / MINUTE) + ' min ago';
-    }
-    if (difference < DAY) {
-      return Math.round(difference / HOUR) + ' hr ago';
-    }
-    if (difference < MONTH) {
-      return Math.round(difference / DAY) + ' day ago';
-    }
-    return Math.round(difference / YEAR) + ' yr ago';
-  };
-
-  // NOTE: O(n) w.r.t. number of log entries (capped at MAX_LOG_SIZE).
-  var updateTimestamps = function() {
-    var entries = $(".log .entries .entry");
-    var now = Date.now();
-
-    for (var i = 0; i < entries.length; i++) {
-      $(entries[i]).find(".publisher .timestamp").text(formatTimeDifference(now, Number($(entries[i]).attr('timestamp'))));
-    }
-  };
-  window.setInterval(updateTimestamps, 15 * SECOND);
 });

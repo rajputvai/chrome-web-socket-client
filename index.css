@@ -50,67 +50,32 @@ html, body {
 
 .log .entry {
   display: table-row;
-  padding-top: 5px;
-}
-
-.log .entry .publisher,
-.log .entry .content {
-  display: table-cell;
-  vertical-align: top;
-  padding: 5px;
-  font-size: 16px;
-  line-height: 20px;
-}
-
-.log .entry .publisher .timestamp {
-  font-weight: normal;
-  font-size: 10px;
-  color: black;
+  /* padding-top: 5px; */
 }
 
 .log .entry .publisher {
   font-weight: bold;
-  text-align: right;
-  width: 80px;
-  text-transform: uppercase;
-  padding-right: 10px;
 }
 
 .log .entry .publisher.system {
   color: red;
 }
 
-.log .entry .publisher.system:before {
-  content: 'SYSTEM';
-}
-
 .log .entry .publisher.console {
   color: orange;
-}
-
-.log .entry .publisher.console:before {
-    content: 'CONSOLE';
 }
 
 .log .entry .publisher.local {
   color: grey;
 }
 
-.log .entry .publisher.local:before {
-  content: 'LOCAL';
-}
-
 .log .entry .publisher.remote {
   color: green;
 }
 
-.log .entry .publisher.remote:before {
-  content: 'REMOTE';
-}
-
 .log .entry .content.text {
   font-family: 'Source Code Pro', 'Courier New', monospace;
-  font-size: 15px;
+  font-size: 14px;
   white-space: pre-wrap;
 }
 
