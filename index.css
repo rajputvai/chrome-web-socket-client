@@ -49,9 +49,13 @@ html, body {
 }
 
 .log .entry {
-  display: table-row;
-  /* padding-top: 5px; */
+  padding: 5px 0;
 }
+.log .entry:hover {
+  background: #ccc !important;
+}
+
+.log .entry:nth-child(even) {background: #eee}
 
 .log .entry .publisher {
   font-weight: bold;

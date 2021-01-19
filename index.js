@@ -20,6 +20,8 @@ $(document).ready(function() {
 
   var MAX_LOG_SIZE = 500;
 
+  var HEARTBEAT_TIMEOUT_IN_MS = 10000 
+
   var closeCodeToString = function(code) {
       code = Number(code);
 
@@ -219,6 +221,7 @@ $(document).ready(function() {
         addLogEntry(LogMessageSender.REMOTE,
                     LogMessageType.TEXT,
                     event.data);
+        onMessageHandler(event.data);
       } 
       else if (event.data instanceof Blob) {
         addLogEntry(LogMessageSender.REMOTE,
@@ -236,9 +239,53 @@ $(document).ready(function() {
                   "The connection was established successfully (in " + (Date.now() - socket.__openTime)+ " ms).\n" + 
                   (socket.extensions ? 'Negotiated Extensions: ' + socket.extensions : '') + 
                   (socket.protocol ? 'Negotiated Protocol: ' + socket.protocol : ''));
+      sendHeartbeat();
       transition();
     };
   };
+
+  let lastHeartbeatSentAt = 0;
+  let lastHeartbeatReceivedAt = 0;
+  let hearbeatTimeoutFunc = undefined;
+
+  const onMessageHandler = (message) => {
+    const data = JSON.parse(message);
+    if (!data)
+      return undefined;
+    if (!data.command)
+      return undefined;
+    const command = data.command
+    switch(command) {
+      case "heartbeat": 
+        if (data.event_id === "websocketClient" && data.res === "ack") {
+          lastHeartbeatReceivedAt = Date.now();
+          lastHeartbeatSentAt = 0
+          setTimeout(sendHeartbeat, 1000);
+          clearTimeout(hearbeatTimeoutFunc);
+        }
+    }
+  }
+
+  const sendHeartbeat = () => {
+    const now = Date.now();
+    lastHeartbeatSentAt = now;
+    lastHeartbeatReceivedAt = 0
+    sendText(JSON.stringify({
+      command: 'heartbeat',
+      intent_utc: now,
+      timestamp: now,
+      event_id: 'websocketClient'
+    }))
+    hearbeatTimeoutFunc = setTimeout(checkHeartbeatTimeout, HEARTBEAT_TIMEOUT_IN_MS + 100);
+  }
+
+  const checkHeartbeatTimeout = () => {
+    const diff = Math.abs(lastHeartbeatSentAt - lastHeartbeatReceivedAt);
+    console.info("checking timeout", diff)
+    if (diff > HEARTBEAT_TIMEOUT_IN_MS) {
+      close(1000, `Heartbeat timeout`, true);
+    }
+  }
 
   var sendText = function(text) {
     addLogEntry(LogMessageSender.LOCAL,
@@ -264,8 +311,10 @@ $(document).ready(function() {
     return undefined;
   };
 
-  var close = function(code, reason) {
-    socket.__isClientClose = true; // Prevent re-connects.
+  var close = function(code, reason, programaticallyClose = false) {
+    if (!programaticallyClose) {
+      socket.__isClientClose = true; // Prevent re-connects.
+    }
 
     try {
       socket.close(Number(code), reason);
