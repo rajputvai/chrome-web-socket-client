@@ -18,7 +18,7 @@ $(document).ready(function() {
     CONSOLE: 'CONSOLE'
   };
 
-  var MAX_LOG_SIZE = 500;
+  var MAX_LOG_SIZE = 300000;
 
   var HEARTBEAT_TIMEOUT_IN_MS = 10000 
 
@@ -70,6 +70,7 @@ $(document).ready(function() {
   };
 
   var socket = null;
+  var eventId = `websocketClient_${Date.now()}`;
 
   var transition = function() {
     $(".controls").removeClass("open closed closing connecting");
@@ -150,7 +151,7 @@ $(document).ready(function() {
   };
 
   var addLogEntry = function(sender, type, data) {
-    // pruneLog();
+    pruneLog();
 
     if (type == LogMessageType.BINARY) {
       data = '(BINARY MESSAGE: ' + data.size + ' bytes)\n' + blobToHex(data);
@@ -257,7 +258,7 @@ $(document).ready(function() {
     const command = data.command
     switch(command) {
       case "heartbeat": 
-        if (data.event_id === "websocketClient" && data.res === "ack") {
+        if (data.event_id === eventId && data.res === "ack") {
           lastHeartbeatReceivedAt = Date.now();
           lastHeartbeatSentAt = 0
           setTimeout(sendHeartbeat, 1000);
@@ -274,7 +275,7 @@ $(document).ready(function() {
       command: 'heartbeat',
       intent_utc: now,
       timestamp: now,
-      event_id: 'websocketClient'
+      event_id: eventId
     }))
     hearbeatTimeoutFunc = setTimeout(checkHeartbeatTimeout, HEARTBEAT_TIMEOUT_IN_MS + 100);
   }
