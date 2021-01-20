@@ -219,9 +219,9 @@ $(document).ready(function() {
     };
     socket.onmessage = function(event) {
       if (typeof event.data == 'string') {
-        addLogEntry(LogMessageSender.REMOTE,
-                    LogMessageType.TEXT,
-                    event.data);
+        // addLogEntry(LogMessageSender.REMOTE,
+        //             LogMessageType.TEXT,
+        //             event.data);
         onMessageHandler(event.data);
       } 
       else if (event.data instanceof Blob) {
@@ -260,7 +260,6 @@ $(document).ready(function() {
       case "heartbeat": 
         if (data.event_id === eventId && data.res === "ack") {
           lastHeartbeatReceivedAt = Date.now();
-          lastHeartbeatSentAt = 0
           setTimeout(sendHeartbeat, 1000);
           clearTimeout(hearbeatTimeoutFunc);
         }
@@ -270,13 +269,12 @@ $(document).ready(function() {
   const sendHeartbeat = () => {
     const now = Date.now();
     lastHeartbeatSentAt = now;
-    lastHeartbeatReceivedAt = 0
     sendText(JSON.stringify({
       command: 'heartbeat',
       intent_utc: now,
       timestamp: now,
       event_id: eventId
-    }))
+    }), false)
     hearbeatTimeoutFunc = setTimeout(checkHeartbeatTimeout, HEARTBEAT_TIMEOUT_IN_MS + 100);
   }
 
@@ -284,14 +282,16 @@ $(document).ready(function() {
     const diff = Math.abs(lastHeartbeatSentAt - lastHeartbeatReceivedAt);
     console.info("checking timeout", diff)
     if (diff > HEARTBEAT_TIMEOUT_IN_MS) {
-      close(1000, `Heartbeat timeout`, true);
+      close(1000, `Heartbeat timeout lastHeartbeatSentAt: ${lastHeartbeatSentAt}, lastHeartbeatReceivedAt: ${lastHeartbeatReceivedAt}`, true);
     }
   }
 
-  var sendText = function(text) {
-    addLogEntry(LogMessageSender.LOCAL,
-                LogMessageType.TEXT,
-                text);
+  var sendText = function(text, addInLogs = true) {
+    if (addInLogs) {
+      addLogEntry(LogMessageSender.LOCAL,
+                  LogMessageType.TEXT,
+                  text);
+      }
     socket.send(text);
   };
 
